@@ -1,0 +1,7 @@
+ReportingStructure is the response type. Then the service for it has one open method to read it via employee id.
+The implementation of the service is in the service/impl folder and the controller exposes it as a get request.
+
+The number of reports a person has can be found by doing a BFS search of all their subordiantes and the subordiantes
+they might have. It's a recursive search that we can do with two sets and a counter.
+
+I'm going to copy the structure of the Employee Service to match expected structures.
