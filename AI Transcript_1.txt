@@ -1,0 +1,34 @@
+User: gradlew bootRun doesn't work
+
+GitHub Copilot: I'll check the project setup and reproduce the failure.
+
+`./gradlew bootRun` was failing before any application code ran — the build itself broke.
+
+## Root cause
+
+The wrapper had been regenerated with **Gradle 9.7.1**, but build.gradle uses the **Spring Boot 3.2.3** plugin, which only supports Gradle 7.x/8.x. Gradle 9 removed `LenientConfiguration.getArtifacts(Spec)`, so compilation died with:
+
+```
+Execution failed for task ':compileJava'.
+> Failed to notify dependency resolution listener.
+   > 'java.util.Set org.gradle.api.artifacts.LenientConfiguration.getArtifacts(org.gradle.api.specs.Spec)'
+```
+
+A second problem: your default JDK is **27**, and Gradle 8.x cannot run on it (`Unsupported class file major version 71`).
+
+## Changes made
+
+1. gradle-wrapper.properties — pinned the wrapper back to Gradle **8.14.3** (the original project shipped 8.6; 8.14.3 is the last 8.x and is already cached locally).
+2. gradle-daemon-jvm.properties (new) — `toolchainVersion=21` so the wrapper launches the daemon on JDK 21 instead of JDK 27. No hardcoded paths, so it still works if the JDK location changes.
+
+build.gradle was left untouched (still targets Java 17 bytecode); changing it to Boot 4.x just to satisfy Gradle 9 would have been a much riskier change for a coding challenge.
+
+## Verification
+
+- `./gradlew compileJava` → BUILD SUCCESSFUL
+- `./gradlew bootRun` → `Started ChallengeApplication ... using Java 21.0.12.1`, Tomcat on port 8080, in-memory Mongo started
+- `GET /employee/16a596ae-...` → **200 OK** (a nonexistent ID returns 500, which is the controller's existing behavior, not a build issue)
+
+If you later upgrade Spring Boot to 4.x, you can bump the wrapper to Gradle 9 and delete gradle-daemon-jvm.properties.
+
+Made changes.
