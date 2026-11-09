@@ -1,0 +1,6 @@
+# I'm adding these files as not to complicate the git history
+build
+.gradle
+gradle/wrapper
+gradlew
+gradlew.bat
